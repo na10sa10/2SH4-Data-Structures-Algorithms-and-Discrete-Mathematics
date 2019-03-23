@@ -1,0 +1,413 @@
+package hugeinteger;
+import java.util.Random;
+
+
+public class HugeInteger {
+    
+    public int[] digitArray;
+    public boolean isNegative;
+    
+    public HugeInteger(String val) throws NumberFormatException{
+        
+        int n = val.length();
+        
+        if ("".equals(val)){
+            throw new NumberFormatException("Empty String");
+        }
+        
+        for (int i=0 ;i<n ;i++ ){                //Runs through string
+            if (!java.lang.Character.isDigit(val.charAt(i))) //checks if each character in string is a valid digit
+            {
+                 if(val.charAt(i) != '-' || i!=0) { //only exception is if there is a negative sign in the beginning
+                     throw new NumberFormatException("Invaild character in input, (0-9)");
+                }
+            }
+        }
+        
+        this.isNegative = (val.charAt(0) == '-'); //stores if the number is negative
+        
+        if (this.isNegative == true)
+            val = val.replace("-", "");
+        
+        val = val.replaceFirst("^0+(?!$)", "");
+        
+        n = val.length();
+        
+        this.digitArray = new int[n]; //if it's negative it will need one less space
+
+        int pos = 0; //positon thru string
+        for (int i = 0; i < this.digitArray.length; i++){ //runs through each position in Array, adds digit to array
+            this.digitArray[i]=Integer.parseInt("" + val.charAt(pos));
+            pos++;
+        }
+    }
+    
+    public HugeInteger(int n) throws IllegalArgumentException{
+        
+        if (n <= 0) //n must be larger than 0
+            throw new IllegalArgumentException("Number must be larger than 0");
+        
+        this.digitArray = new int[n]; //initialize array
+        
+        Random rand = new Random(); 
+        
+        for (int i = 0; i<n; i++){
+            this.digitArray[i] = rand.nextInt(10); //fill array with random variables
+        }
+        
+        this.isNegative = rand.nextDouble()<0.5; //psuedo randomly +ve or -ve
+    }
+    
+    public int compareTo(HugeInteger h){
+        
+        if(this.isNegative == true && h.isNegative == false){
+            return -1; // -this < h
+        }
+        
+        if(this.isNegative == false && h.isNegative == true){
+            return 1; // this > -h
+        }
+        
+        if(this.isNegative == false){ //both +ve
+            if (this.digitArray.length > h.digitArray.length)
+                return 1;
+            if (this.digitArray.length < h.digitArray.length)
+                return -1;
+            else{  
+                for (int i = 0; i < this.digitArray.length; i++){
+                    if(this.digitArray[i]<h.digitArray[i]){
+                        return -1;
+                    }
+                    if(this.digitArray[i]>h.digitArray[i]){
+                        return 1;
+                    }
+                }
+            }
+        }
+        
+        if(this.isNegative == true){ //both -ve
+            if (this.digitArray.length > h.digitArray.length)
+                return -1;
+            if (this.digitArray.length < h.digitArray.length)
+                return 1;
+            else{  
+                for (int i = 0; i < this.digitArray.length; i++){
+                    if(this.digitArray[i]<h.digitArray[i]){
+                        return 1;
+                    }
+                    if(this.digitArray[i]>h.digitArray[i]){
+                        return -1;
+                    }
+                }
+            }
+        }
+        
+        return 0;
+    }
+    
+    public String toString(){
+        
+        String stringOut = "";
+        
+        if (this.isNegative == true)
+            stringOut += "-";
+        
+        for (int i = 0; i < this.digitArray.length; i++) {
+            stringOut += this.digitArray[i];
+        }
+        
+        return stringOut;
+    }
+    
+    public HugeInteger add(HugeInteger h){
+        
+        String sum = "";
+        int length = this.digitArray.length>=h.digitArray.length ? (this.digitArray.length+1) : (h.digitArray.length+1);
+        int digit=0;
+        int carry = 0;
+        int [] sumArray = new int[length];
+        if (this.isNegative==h.isNegative){     //case when both positive or both negative
+            
+            for (int i = 0; i<length-1; i++){
+                
+                if(i>=this.digitArray.length){
+                    digit=h.digitArray[h.digitArray.length-i-1]+carry;   
+                }
+                else if(i>=h.digitArray.length){
+                    digit=this.digitArray[this.digitArray.length-i-1]+carry;   
+                }
+                else if (i<=h.digitArray.length && i<=this.digitArray.length){
+                    digit = this.digitArray[this.digitArray.length-i-1] + h.digitArray[h.digitArray.length-i-1] + carry;
+                    
+                }
+                
+                if (digit > 9){
+                    sumArray[i]=digit-10;
+                    carry=1;
+                }
+                else{
+                    sumArray[i]=digit;
+                    carry=0;
+                }
+            }
+          
+            sumArray[sumArray.length-1] = carry == 1 ? 1 : 0;
+            
+            sum += this.isNegative ? "-" : "";
+            
+            for(int i=sumArray.length-1;i>=0;i--){
+                    sum+=sumArray[i];
+                }
+            }
+        
+        else{ // one number negative
+            
+            if (this.isNegative == true){
+                this.isNegative = false;
+                HugeInteger AddSum = h.subtract(this);
+                this.isNegative = false;
+                return AddSum;
+            } else {
+                h.isNegative = false;
+                HugeInteger AddSum = h.subtract(this);
+                h.isNegative = true;
+                return AddSum;
+            }
+            
+        }
+
+        HugeInteger SumHugeInteger=new HugeInteger(sum);
+        
+        return SumHugeInteger;
+    } 
+    
+    public HugeInteger subtract(HugeInteger h){
+        
+        String diff = "";
+        int length = this.digitArray.length>=h.digitArray.length ? (this.digitArray.length+1) : (h.digitArray.length+1);
+        int digit=0;
+        int carry = 0;
+        int [] sumArray = new int[length];
+        
+        if (this.isNegative == false && h.isNegative == false){     //case when both positive
+            switch (this.compareTo(h)) {
+                case 0:
+                    diff = "0";
+                    break;
+                case 1:
+                    for (int i = 0; i<length-1; i++){
+                        
+                        if(i>=this.digitArray.length){
+                            digit=h.digitArray[h.digitArray.length-i-1]-carry;
+                        }
+                        else if(i>=h.digitArray.length){
+                            digit=this.digitArray[this.digitArray.length-i-1]-carry;
+                        }
+                        else if (i<=h.digitArray.length && i<=this.digitArray.length){
+                            digit = this.digitArray[this.digitArray.length-i-1] - h.digitArray[h.digitArray.length-i-1] - carry;
+                        }
+                        
+                        if (digit < 0){
+                            sumArray[i]=digit+10;
+                            carry=1;
+                        }
+                        else{
+                            sumArray[i]=digit;
+                            carry=0;
+                        }
+                    }   sumArray[sumArray.length-1] = carry == 1 ? 1 : 0;
+                    diff += this.isNegative ? "-" : "";
+                    for(int i=sumArray.length-1;i>=0;i--){
+                        diff+=sumArray[i];
+                    }
+                    break;
+                case -1:
+                    for (int i = 0; i<length-1; i++){
+                        
+                        if(i>=h.digitArray.length){
+                            digit=this.digitArray[this.digitArray.length-i-1]-carry;
+                        }
+                        else if(i>=this.digitArray.length){
+                            digit=h.digitArray[h.digitArray.length-i-1]-carry;
+                        }
+                        else if (i<=this.digitArray.length && i<=h.digitArray.length){
+                            digit = h.digitArray[h.digitArray.length-i-1] - this.digitArray[this.digitArray.length-i-1] - carry;
+                        }
+                        
+                        if (digit < 0){
+                            sumArray[i]=digit+10;
+                            carry=1;
+                        }
+                        else{
+                            sumArray[i]=digit;
+                            carry=0;
+                        }
+                    }   sumArray[sumArray.length-1] = carry == 1 ? 1 : 0;
+                    diff += this.isNegative ? "" : "-";
+                    for(int i=sumArray.length-1;i>=0;i--){
+                        diff+=sumArray[i];
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+        else if (this.isNegative == true && h.isNegative == true){  //case when both negative
+            
+            this.isNegative = false;
+            h.isNegative = false;
+            
+            HugeInteger SubDiff = this.subtract(h);
+            
+            this.isNegative = true;
+            h.isNegative = true;
+            
+            SubDiff.isNegative = !(SubDiff.isNegative);
+            
+            return SubDiff;
+        }
+        else{ //case when one number is negative and the other is postive 
+            if (this.isNegative){
+                
+                this.isNegative = false;
+                
+                HugeInteger SubDiff = this.add(h);
+                
+                this.isNegative = true;
+                
+                SubDiff.isNegative = true;
+                
+                return SubDiff; 
+            } else {
+                
+                h.isNegative = false;
+                
+                HugeInteger SubDiff = this.add(h);
+                
+                return SubDiff;
+                
+            }     
+        }
+
+        HugeInteger SumHugeInteger=new HugeInteger(diff);
+        
+        return SumHugeInteger;
+        
+    } 
+    
+    public HugeInteger multiply(HugeInteger h){
+        
+        HugeInteger prod = new HugeInteger("0");
+        int digit, carry=0;
+
+        for (int i = 0; i<this.digitArray.length;i++){
+
+            String addto = "";
+            String addtorev = "";
+            
+            for (int c = 0; c < i; c++){
+                addtorev += "0";
+            }
+
+            for (int j = 0; j<h.digitArray.length;j++){
+                
+                digit = (this.digitArray[this.digitArray.length-i-1]*h.digitArray[h.digitArray.length-j-1]) + carry;
+                
+                if (j != h.digitArray.length-1){
+                
+                    if (digit>9){
+                        carry = (int)(digit / 10);
+                        digit %= 10;
+                    
+                    }
+                    else{
+                        carry = 0;
+                    }
+                    
+                    addtorev += digit;
+                } else {
+                    if (digit > 9){
+                        addtorev += (digit % 10);
+                        addtorev += ((int)(digit / 10));
+                    } else {
+                        addtorev += digit;
+                    }
+                }
+                
+            }     
+
+            for (int k = 0;k < addtorev.length(); k++) {
+                addto += "" + addtorev.charAt(addtorev.length()-k-1);
+            }
+
+            HugeInteger finaladd = new HugeInteger(addto);
+
+            prod = prod.add(finaladd);
+            
+        }
+        
+        if (this.isNegative != h.isNegative)
+            prod.isNegative = true;
+        else
+            prod.isNegative = false;
+        
+        return prod;
+        
+    } 
+    
+    public HugeInteger divide(HugeInteger h) throws IllegalArgumentException{
+        
+        if ("0".equals(h.toString()))
+            throw new IllegalArgumentException("Cannot divide by 0");
+        
+        
+        boolean DivNegative = (this.isNegative != h.isNegative);
+        
+        this.isNegative = false;
+        h.isNegative = false;
+        
+        String quo = "";
+        
+        if (this.compareTo(h)==0){
+            HugeInteger FinalDiv = new HugeInteger("1");
+            return FinalDiv;
+        } else if ((this.compareTo(h) == -1) && (this.isNegative == false) && (h.isNegative == false)){
+            HugeInteger FinalDiv = new HugeInteger("0");
+            return FinalDiv;
+        } else if ((this.compareTo(h) == -1) && (this.isNegative == true) && (h.isNegative == true)){
+            HugeInteger FinalDiv = new HugeInteger("0");
+            return FinalDiv;
+        } else {
+        
+            String dividend = "";
+            
+            for (int i = 0; i < this.digitArray.length; i++){
+                
+                dividend += this.digitArray[i];
+                HugeInteger hugeintdividend = new HugeInteger(dividend);
+
+                int div;
+                div = (int)(Integer.parseInt("" + hugeintdividend.toString())/Integer.parseInt("" + h.toString()));
+                
+
+                quo += div;
+                
+                HugeInteger FinalDiv = new HugeInteger(Integer.toString(div));
+
+                HugeInteger newDividend = FinalDiv.multiply(h);
+                newDividend = hugeintdividend.subtract(newDividend);
+                
+                dividend = newDividend.toString();
+                
+            }
+            
+            HugeInteger FinalDiv = new HugeInteger(quo);
+            FinalDiv.isNegative = DivNegative;
+            return FinalDiv;
+
+        }
+    }
+    
+    
+    
+}
